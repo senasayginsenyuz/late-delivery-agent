@@ -1,0 +1,17 @@
+name = "late-delivery-agent"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# The JSON artifacts live outside src/ so model/ stays the single source of
+# truth. esbuild inlines them at build time — no runtime fetch, no cold cache.
+[build]
+command = ""
+
+[observability]
+enabled = true
+
+[vars]
+ENVIRONMENT = "production"
+
+# GEMINI_API_KEY is a secret, never a var:
+#   npx wrangler secret put GEMINI_API_KEY

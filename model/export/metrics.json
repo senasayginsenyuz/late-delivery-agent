@@ -1,0 +1,215 @@
+{
+ "dataset": {
+  "rows": 180519,
+  "late_share": 0.5483,
+  "test_rows": 36104,
+  "split": {
+   "test_size": 0.2,
+   "seed": 42,
+   "stratified": true
+  }
+ },
+ "comparison": [
+  {
+   "model": "parent (25 features)",
+   "threshold": 0.5,
+   "accuracy": 0.7134,
+   "f1_weighted": 0.7077,
+   "f1_late": 0.6813,
+   "precision_late": 0.8729,
+   "recall_late": 0.5586,
+   "roc_auc": 0.7761,
+   "brier": 0.1788
+  },
+  {
+   "model": "operational (11 features)",
+   "threshold": 0.5,
+   "accuracy": 0.6972,
+   "f1_weighted": 0.6919,
+   "f1_late": 0.6665,
+   "precision_late": 0.8414,
+   "recall_late": 0.5518,
+   "roc_auc": 0.7464,
+   "brier": 0.1931
+  },
+  {
+   "model": "lookup table (Shipping Mode only)",
+   "threshold": 0.5,
+   "accuracy": 0.6967,
+   "f1_weighted": 0.6905,
+   "f1_late": 0.6624,
+   "precision_late": 0.8502,
+   "recall_late": 0.5425,
+   "roc_auc": 0.7295,
+   "brier": 0.1954
+  }
+ ],
+ "collinearity": {
+  "note": "Shipping Mode fixes the scheduled window, so the two features carrying 93% of the importance are one variable.",
+  "modes": [
+   {
+    "shipping_mode": "First Class",
+    "scheduled_days": 1,
+    "late_rate": 0.9532,
+    "orders": 27814
+   },
+   {
+    "shipping_mode": "Same Day",
+    "scheduled_days": 0,
+    "late_rate": 0.4574,
+    "orders": 9737
+   },
+   {
+    "shipping_mode": "Second Class",
+    "scheduled_days": 2,
+    "late_rate": 0.7663,
+    "orders": 35216
+   },
+   {
+    "shipping_mode": "Standard Class",
+    "scheduled_days": 4,
+    "late_rate": 0.3807,
+    "orders": 107752
+   }
+  ],
+  "lookup_vs_model_agreement": 0.9903
+ },
+ "operational": {
+  "train_accuracy": 0.6971,
+  "test_accuracy": 0.6972,
+  "overfit_gap": -0.0001,
+  "feature_importance": [
+   {
+    "feature": "Shipping Mode",
+    "gain": 0.4952
+   },
+   {
+    "feature": "Days for shipment (scheduled)",
+    "gain": 0.4361
+   },
+   {
+    "feature": "Type",
+    "gain": 0.0457
+   },
+   {
+    "feature": "Market",
+    "gain": 0.0035
+   },
+   {
+    "feature": "order_day_of_week",
+    "gain": 0.0034
+   },
+   {
+    "feature": "order_month",
+    "gain": 0.0033
+   },
+   {
+    "feature": "Order Region",
+    "gain": 0.0033
+   },
+   {
+    "feature": "Order Item Product Price",
+    "gain": 0.0025
+   },
+   {
+    "feature": "Order Item Discount Rate",
+    "gain": 0.0024
+   },
+   {
+    "feature": "Category Name",
+    "gain": 0.0024
+   },
+   {
+    "feature": "Order Item Quantity",
+    "gain": 0.0022
+   }
+  ]
+ },
+ "threshold_curve": [
+  {
+   "threshold": 0.3,
+   "precision_late": 0.5503,
+   "recall_late": 0.9973,
+   "f1_late": 0.7092,
+   "f1_weighted": 0.3983,
+   "accuracy": 0.5516,
+   "flag_rate": 0.9937
+  },
+  {
+   "threshold": 0.35,
+   "precision_late": 0.5777,
+   "recall_late": 0.9307,
+   "f1_late": 0.7129,
+   "f1_weighted": 0.5159,
+   "accuracy": 0.589,
+   "flag_rate": 0.8834
+  },
+  {
+   "threshold": 0.4,
+   "precision_late": 0.6844,
+   "recall_late": 0.7098,
+   "f1_late": 0.6969,
+   "f1_weighted": 0.6606,
+   "accuracy": 0.6614,
+   "flag_rate": 0.5687
+  },
+  {
+   "threshold": 0.45,
+   "precision_late": 0.8157,
+   "recall_late": 0.5765,
+   "f1_late": 0.6756,
+   "f1_weighted": 0.6932,
+   "accuracy": 0.6964,
+   "flag_rate": 0.3875
+  },
+  {
+   "threshold": 0.5,
+   "precision_late": 0.8414,
+   "recall_late": 0.5518,
+   "f1_late": 0.6665,
+   "f1_weighted": 0.6919,
+   "accuracy": 0.6972,
+   "flag_rate": 0.3596
+  },
+  {
+   "threshold": 0.55,
+   "precision_late": 0.8495,
+   "recall_late": 0.5435,
+   "f1_late": 0.6629,
+   "f1_weighted": 0.6908,
+   "accuracy": 0.6969,
+   "flag_rate": 0.3508
+  },
+  {
+   "threshold": 0.6,
+   "precision_late": 0.8502,
+   "recall_late": 0.5425,
+   "f1_late": 0.6624,
+   "f1_weighted": 0.6906,
+   "accuracy": 0.6968,
+   "flag_rate": 0.3499
+  },
+  {
+   "threshold": 0.65,
+   "precision_late": 0.8512,
+   "recall_late": 0.5406,
+   "f1_late": 0.6612,
+   "f1_weighted": 0.6899,
+   "accuracy": 0.6963,
+   "flag_rate": 0.3482
+  },
+  {
+   "threshold": 0.7,
+   "precision_late": 0.8752,
+   "recall_late": 0.4868,
+   "f1_late": 0.6256,
+   "f1_weighted": 0.6689,
+   "accuracy": 0.6805,
+   "flag_rate": 0.305
+  }
+ ],
+ "parity": {
+  "max_abs_error_vs_xgboost": 1.8781055544092595e-07,
+  "rows_checked": 5000
+ }
+}

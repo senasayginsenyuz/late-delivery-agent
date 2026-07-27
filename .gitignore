@@ -1,0 +1,11 @@
+node_modules/
+.wrangler/
+.dev.vars
+*.log
+.DS_Store
+
+# The dataset is 95 MB and comes from Kaggle — see README.
+*.csv
+
+__pycache__/
+*.pyc

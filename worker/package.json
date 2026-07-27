@@ -1,0 +1,16 @@
+{
+  "name": "late-delivery-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Late delivery decision agent — XGBoost at the edge, Gemini for the sentence",
+  "scripts": {
+    "test": "node --test test/",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.42.0"
+  }
+}
