@@ -49,10 +49,31 @@ from the measured precision/recall curve at every threshold, and the cheapest
 one wins. The same inputs always give the same threshold.
 
 **The language model never touches a number.** Every figure is computed before
-Gemini is called and handed to it as fact. Its only job is to turn the analysis
-into something a planner can read. If Gemini is unreachable, the API still
-returns the full analysis with `explanation: null` — the numbers are the
-product, the sentence is a convenience.
+Gemini is called and handed to it **already formatted as a string** — telling a
+model not to compute is weaker than leaving it nothing to compute. With raw
+values it rendered `0.4109` as "%41,09" while the panel beside it read "%41,1".
+If Gemini is unreachable, the API still returns the full analysis with
+`explanation: null` — the numbers are the product, the sentence is a convenience.
+
+### Picking the model, by measurement
+
+The obvious default is a trap. Probed against a fresh free-tier key:
+
+| Model | Result |
+|---|---|
+| `gemini-2.5-flash` / `-lite` | "no longer available to new users" |
+| `gemini-2.0-flash` | quota exceeded |
+| **`gemini-3.6-flash`** | 1.26 s — **primary** |
+| `gemini-3-flash-preview` | 1.37 s — fallback |
+| `gemini-flash-latest` | 1.74 s — last resort (floating alias) |
+
+Two API details that fail loudly rather than gracefully: Gemini 3 takes
+`thinkingLevel`, not `thinkingBudget` (the latter is rejected as an invalid
+argument), and thinking tokens are drawn from `maxOutputTokens`, so a tight
+ceiling returns a *truncated* answer — one test run stopped at
+"…Planlamacının belirlediği" and nothing after it. A half-sentence reads as
+finished and the clause it swallows is usually the guardrail, so `MAX_TOKENS`
+is treated as a failure and retried on the next model, not returned.
 
 ---
 
@@ -248,7 +269,12 @@ things that must be identified and dropped before any modelling starts.
   quota. A real quota belongs in a rate-limiting rule in front of the Worker.
 - **The site assistant is closed-book by construction.** It answers only from
   `knowledge.js`. Ask it something outside that and it says the site does not
-  cover it — which is the intended behaviour, not a gap.
+  cover it — which is the intended behaviour, not a gap. It carries no phone
+  number or e-mail address, so it cannot become the hole in a privacy policy
+  the rest of the site keeps. Adversarially tested against instruction
+  override, forged "SYSTEM:" turns, urgency pretexts for contact details, and
+  invented employers; it also reports date ranges rather than computing
+  durations, and emits plain text because the page prints the answer verbatim.
 
 ---
 

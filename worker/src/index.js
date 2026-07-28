@@ -16,7 +16,7 @@ import metrics from "../../model/export/metrics.json";
 
 import { predict } from "./booster.js";
 import { buildVector, allowedValues, ValidationError, CANONICAL_DAYS } from "./features.js";
-import { choosePolicy, counterfactuals } from "./policy.js";
+import { choosePolicy, counterfactuals, display } from "./policy.js";
 import { generate, LLMError } from "./llm.js";
 import { assistantSystemPrompt, riskSystemPrompt } from "./knowledge.js";
 
@@ -163,8 +163,8 @@ async function handleRisk(request, env) {
     const explanation = await generate({
       apiKey: env.GEMINI_API_KEY,
       system: riskSystemPrompt(lang),
-      user: JSON.stringify(forTheModel(analysis)),
-      maxOutputTokens: 400,
+      user: JSON.stringify(forTheModel(analysis, lang)),
+      maxOutputTokens: 900,
     });
     return { ...analysis, explanation };
   } catch (err) {
@@ -205,18 +205,49 @@ async function handleAsk(request, env) {
 
 // ------------------------------------------------------------------- helpers
 
-/** Trim the analysis to what the sentence needs — a smaller prompt drifts less. */
-function forTheModel(a) {
+/**
+ * Trim the analysis to what the sentence needs — a smaller prompt drifts less —
+ * and hand over finished strings rather than raw numbers.
+ *
+ * Telling a model not to compute is weaker than giving it nothing to compute.
+ * With raw values it turned 0.4109 into "%41,09" while the panel beside it read
+ * "%41,1"; with pre-formatted strings there is nothing left to disagree about.
+ *
+ * The guardrails are passed as short codes, not as their full text: the page
+ * already prints them verbatim in their own block, so a note that repeats them
+ * is duplication the reader has to wade through.
+ */
+function forTheModel(a, lang) {
+  const prob = (x) => display.probability(x, lang);
+  const pc = (x) => display.percent(x, lang);
+  const cost = (x) => display.cost(x, lang);
+
   return {
     order: a.order,
-    probability: a.probability,
-    decision: a.decision,
+    late_probability: prob(a.probability),
+    decision: {
+      flagged: a.decision.flagged,
+      threshold: display.ratio(a.decision.threshold, lang),
+      label: a.decision.label,
+    },
     costs: a.costs,
-    chosen_threshold: a.policy.chosen,
+    chosen_threshold: {
+      expected_cost_per_order: cost(a.policy.chosen.expected_cost),
+      share_of_orders_flagged: pc(a.policy.chosen.flag_rate),
+    },
     recommendation: a.policy.recommendation,
-    baselines: a.policy.baselines,
-    counterfactuals: a.counterfactuals.slice(0, 3),
-    guardrails: a.guardrails,
+    best_rule_without_a_model: {
+      name: a.policy.baselines.best_blanket_name,
+      expected_cost_per_order: cost(a.policy.baselines.best_blanket),
+      model_saves_per_order: cost(a.policy.baselines.saving_per_order),
+    },
+    counterfactuals: a.counterfactuals.slice(0, 3).map((c) => ({
+      change: c.change,
+      scheduled_days: c.scheduled_days,
+      new_probability: prob(c.probability),
+      clears_threshold: c.crosses_threshold,
+    })),
+    guardrail_codes: a.guardrails.map((g) => g.code),
     warnings: a.warnings,
   };
 }

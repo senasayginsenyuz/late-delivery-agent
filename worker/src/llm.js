@@ -10,6 +10,28 @@
 
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 
+/**
+ * Model choice, measured against this project's own key rather than assumed:
+ *
+ *   gemini-2.5-flash / -lite   closed to new accounts ("no longer available
+ *                              to new users") — the obvious default is a trap
+ *   gemini-2.0-flash           returns quota-exceeded on a fresh free key
+ *   gemini-3.6-flash           1.26 s, generally available   <- primary
+ *   gemini-3-flash-preview     1.37 s                        <- fallback
+ *   gemini-flash-latest        1.74 s, floating alias        <- last resort
+ *
+ * The alias is last on purpose: it silently follows Google's newest model, so
+ * it is the right safety net and the wrong default.
+ *
+ * Gemini 3 takes `thinkingLevel`, not `thinkingBudget` — passing the latter is
+ * rejected outright with "Request contains an invalid argument".
+ */
+export const MODELS = ["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-flash-latest"];
+
+/** Thinking tokens are drawn from maxOutputTokens, so the ceiling has to cover
+ *  both or the answer comes back empty with finishReason MAX_TOKENS. */
+const THINKING_HEADROOM = 700;
+
 export class LLMError extends Error {
   constructor(message, status) {
     super(message);
@@ -20,7 +42,7 @@ export class LLMError extends Error {
 
 export async function generate({
   apiKey,
-  model = "gemini-2.5-flash",
+  models = MODELS,
   system,
   user,
   maxOutputTokens = 500,
@@ -29,6 +51,23 @@ export async function generate({
 }) {
   if (!apiKey) throw new LLMError("GEMINI_API_KEY tanımlı değil", 503);
 
+  let last = null;
+  for (const model of models) {
+    try {
+      return await once({ apiKey, model, system, user, maxOutputTokens, temperature, signal });
+    } catch (err) {
+      last = err;
+      // Retry the next model only for transient or model-specific failures.
+      // A blocked prompt or a bad key will fail identically everywhere.
+      const transient = err instanceof LLMError &&
+        (err.status === 429 || err.status === 502 || err.status === 503);
+      if (!transient) throw err;
+    }
+  }
+  throw last;
+}
+
+async function once({ apiKey, model, system, user, maxOutputTokens, temperature, signal }) {
   const res = await fetch(`${ENDPOINT}/${model}:generateContent`, {
     method: "POST",
     headers: {
@@ -41,13 +80,12 @@ export async function generate({
       contents: [{ role: "user", parts: [{ text: user }] }],
       generationConfig: {
         temperature,
-        maxOutputTokens,
+        maxOutputTokens: maxOutputTokens + THINKING_HEADROOM,
         topP: 0.9,
-        // No "thinking" budget: these are short, grounded rewrites and the
-        // latency shows up directly in the demo.
-        thinkingConfig: { thinkingBudget: 0 },
+        // These are short, grounded rewrites; the latency shows up directly in
+        // the demo, so keep deliberation to the minimum the API allows.
+        thinkingConfig: { thinkingLevel: "low" },
       },
-      safetySettings: [],
     }),
     signal,
   });
@@ -55,18 +93,29 @@ export async function generate({
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     throw new LLMError(
-      `Gemini ${res.status}: ${detail.slice(0, 300)}`,
-      res.status === 429 ? 429 : 502
+      `Gemini ${model} ${res.status}: ${detail.slice(0, 300)}`,
+      res.status === 429 ? 429 : res.status >= 500 ? 503 : 502
     );
   }
 
   const data = await res.json();
   const candidate = data?.candidates?.[0];
   const text = candidate?.content?.parts?.map((p) => p.text ?? "").join("").trim();
+  const reason = candidate?.finishReason;
 
   if (!text) {
-    const reason = candidate?.finishReason ?? data?.promptFeedback?.blockReason ?? "boş yanıt";
-    throw new LLMError(`Gemini metin döndürmedi (${reason})`, 502);
+    const why = reason ?? data?.promptFeedback?.blockReason ?? "boş yanıt";
+    // MAX_TOKENS with no text means thinking ate the whole budget: worth
+    // another model rather than surfacing an empty answer.
+    throw new LLMError(`Gemini ${model} metin döndürmedi (${why})`,
+      why === "MAX_TOKENS" ? 503 : 502);
+  }
+
+  // A truncated answer is worse than none: it reads as finished and stops
+  // mid-sentence, and the sentence it swallows is often the guardrail. Seen in
+  // testing — "...Planlamacının belirlediği" and nothing after it.
+  if (reason === "MAX_TOKENS") {
+    throw new LLMError(`Gemini ${model} yanıtı yarıda kesildi (MAX_TOKENS)`, 503);
   }
   return text;
 }

@@ -222,6 +222,24 @@ function round4(n) {
   return Math.round(n * 1e4) / 1e4;
 }
 
+/**
+ * Display formatters, exported so the language model can be handed finished
+ * strings instead of raw numbers. It is told not to compute; not giving it
+ * anything to reformat is stronger than telling it not to.
+ */
+export const display = {
+  ratio: (x, lang) => fixed(x, 2, lang),
+  /** Probabilities: one decimal, matching what the panel prints beside the note.
+   *  Two formatters that disagree put "%41,09" next to "%41,1" on one screen. */
+  probability: (x, lang) => wrapPct(fixed(x * 100, 1, lang), lang),
+  percent: (x, lang) => wrapPct(pct(x, lang), lang),
+  cost: (x, lang) => num(x, lang, 4),
+};
+
+function wrapPct(s, lang) {
+  return lang === "en" ? `${s}%` : `%${s}`;
+}
+
 /** A decimal in the reader's own notation — Turkish uses a comma. */
 function num(x, lang, digits = 4) {
   return fixed(trimZeros(Number(x).toFixed(digits)), null, lang);
