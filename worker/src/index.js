@@ -17,8 +17,8 @@ import metrics from "../../model/export/metrics.json";
 import { predict } from "./booster.js";
 import { buildVector, allowedValues, ValidationError, CANONICAL_DAYS } from "./features.js";
 import { choosePolicy, counterfactuals, display } from "./policy.js";
-import { generate, LLMError } from "./llm.js";
-import { assistantSystemPrompt, riskSystemPrompt } from "./knowledge.js";
+import { generate, generateOnWorkersAI, LLMError, WORKERS_AI_MODEL } from "./llm.js";
+import { assistantSystemPrompt, riskSystemPrompt, riskFallbackPrompt } from "./knowledge.js";
 
 const ALLOWED_ORIGINS = new Set([
   "https://senasayginsenyuz.com",
@@ -158,21 +158,38 @@ async function handleRisk(request, env) {
 
   if (!wantsExplanation) return { ...analysis, explanation: null };
 
+  const prompt = JSON.stringify(forTheModel(analysis, lang));
+
   try {
     await rateLimit(request, "llm", LIMITS.llmPerMinute);
     const explanation = await generate({
       apiKey: env.GEMINI_API_KEY,
       system: riskSystemPrompt(lang),
-      user: JSON.stringify(forTheModel(analysis, lang)),
+      user: prompt,
       maxOutputTokens: 900,
     });
-    return { ...analysis, explanation };
+    return { ...analysis, explanation, explained_by: "gemini" };
   } catch (err) {
-    // The numbers are the product; the sentence is a convenience. Losing the
+    // Gemini's free tier allows 20 requests per day per model. When that runs
+    // out, Cloudflare's own inference takes over rather than the section going
+    // wordless. Its prompt is a separate, much blunter one — see knowledge.js.
+    if (err?.name !== "RateLimited") {
+      try {
+        const explanation = await generateOnWorkersAI({
+          ai: env.AI,
+          system: riskFallbackPrompt(lang),
+          user: prompt,
+          maxOutputTokens: 400,
+        });
+        return { ...analysis, explanation, explained_by: WORKERS_AI_MODEL };
+      } catch { /* fall through to the wordless answer */ }
+    }
+    // The numbers are the product; the sentence is a convenience. Losing every
     // language model must not lose the analysis.
     return {
       ...analysis,
       explanation: null,
+      explained_by: null,
       explanation_error: err instanceof LLMError ? err.message : "açıklama üretilemedi",
     };
   }

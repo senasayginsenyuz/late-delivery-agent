@@ -9,6 +9,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { choosePolicy, counterfactuals } from "../src/policy.js";
+import { riskFallbackPrompt } from "../src/knowledge.js";
 import { predict } from "../src/booster.js";
 import { buildVector, CANONICAL_DAYS } from "../src/features.js";
 
@@ -229,4 +230,29 @@ test("counterfactuals let the window follow the mode", () => {
   for (const option of options) {
     assert.equal(option.scheduled_days, CANONICAL_DAYS[option.shipping_mode]);
   }
+});
+
+test("the small-model fallback prompt exists in both languages and stays blunt", () => {
+  // Given the Gemini prompt verbatim, llama-3.3-70b echoed the guardrail-code
+  // instruction into its answer and the smaller models invented figures. The
+  // fallback prompt must stay free of that meta-reasoning.
+  for (const lang of ["tr", "en"]) {
+    const p = riskFallbackPrompt(lang);
+    assert.ok(p.length > 200 && p.length < 1400, `${lang}: ${p.length} chars`);
+    assert.doesNotMatch(p, /guardrail_codes|worse_than_blanket|no_edge_over_blanket/,
+      `${lang}: guardrail meta-reasoning leaked into the small-model prompt`);
+  }
+  assert.match(riskFallbackPrompt("tr"), /CÜMLE 1/);
+  assert.match(riskFallbackPrompt("en"), /SENTENCE 1/);
+  assert.notEqual(riskFallbackPrompt("tr"), riskFallbackPrompt("en"));
+});
+
+test("the site assistant never routes to the small model", () => {
+  // Visitor free-text goes straight into that prompt, and llama-3.3-70b hands
+  // over the whole system prompt when asked to. Only /api/risk may fall back.
+  const src = readFileSync(fileURLToPath(new URL("../src/index.js", import.meta.url)), "utf8");
+  const ask = src.slice(src.indexOf("async function handleAsk"), src.indexOf("// ---", src.indexOf("async function handleAsk")));
+  assert.doesNotMatch(ask, /generateOnWorkersAI|riskFallbackPrompt|env\.AI/,
+    "handleAsk must not reach Workers AI");
+  assert.match(src, /generateOnWorkersAI/, "handleRisk should still have the fallback");
 });

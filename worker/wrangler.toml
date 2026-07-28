@@ -7,6 +7,10 @@ compatibility_date = "2026-07-01"
 [build]
 command = ""
 
+# Gemini kotası bittiğinde devreye giren yedek çıkarım — anahtar gerektirmez.
+[ai]
+binding = "AI"
+
 [observability]
 enabled = true
 

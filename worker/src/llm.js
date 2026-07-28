@@ -32,12 +32,37 @@ export const MODELS = ["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-fla
  *  both or the answer comes back empty with finishReason MAX_TOKENS. */
 const THINKING_HEADROOM = 700;
 
+/**
+ * Cloudflare's own inference, used only when Gemini's daily free quota is gone.
+ * Runs on the same Worker, needs no key and no card. See riskFallbackPrompt()
+ * for why it gets its own prompt and why the site assistant never uses it.
+ */
+export const WORKERS_AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+
 export class LLMError extends Error {
   constructor(message, status) {
     super(message);
     this.name = "LLMError";
     this.status = status;
   }
+}
+
+/** @returns {Promise<string>} */
+export async function generateOnWorkersAI({ ai, system, user, maxOutputTokens = 400 }) {
+  if (!ai) throw new LLMError("Workers AI bağlantısı yok", 503);
+
+  const out = await ai.run(WORKERS_AI_MODEL, {
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    max_tokens: maxOutputTokens,
+    temperature: 0.1,
+  });
+
+  const text = (out?.response ?? "").trim();
+  if (!text) throw new LLMError("Workers AI metin döndürmedi", 502);
+  return text;
 }
 
 export async function generate({
