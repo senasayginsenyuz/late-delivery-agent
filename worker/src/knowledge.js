@@ -19,8 +19,8 @@ export const KNOWLEDGE = `
 # Sena Saygın Şenyüz
 
 Endüstri mühendisi. Üretim planlama sahasından yapay zekâ ve veri tarafına
-geçiyor. Konum: Türkiye ve Sırbistan arasında; Avrupa mesaisine tam uyumlu;
-uzaktan çalışır.
+geçiyor. Uzaktan çalışır. (Konum bilgisi sitede yayımlanmıyor; sorulursa
+iletişim kanallarına yönlendir.)
 
 Aradığı roller: üretim ve tedarik zinciri için yapay zekâ / veri analisti,
 yapay zekâ iş analisti, ajan tabanlı yapay zekâ ve süreç otomasyonu.
@@ -43,14 +43,23 @@ Diller: Türkçe (ana dil), İngilizce (B2).
 
 Endüstri Mühendisliği lisans, Atılım Üniversitesi, 2016–2021.
 
-## Belgeler (sekiz belge, 2023 → 2026)
+## Belgeler (on dört belge, 2023 → 2026)
 
 - 2026 · Machine Learning Specialization — Stanford / DeepLearning.AI
-- 2026 · Yapay Zekâ 1 — Veri Analizi Okulu (YÖK)
-- 2026 · Yapay Zekâ Kolaylaştırıcı Uygulamalar — Veri Analizi Okulu (YÖK)
+- 2026 · Python for Everybody (PY4E) uzmanlığı, 5 kurs — University of Michigan
+- 2026 · Huawei Student Developers Veri Bilimi ve Makine Öğrenmesi Bootcamp —
+  Türkiye Yapay Zekâ Akademisi
+- 2026 · Büyük Dil Modelleri (LLM) — Türkiye Yapay Zekâ Akademisi
+- 2026 · Yapay Zekâ ve Makine Öğrenmesi — Veri Analizi Okulu
+  (YÖK · Marmara / ODTÜ / İTÜ / Boğaziçi)
+- 2026 · Yapay Zekâ ve Kolaylaştırıcı Araçlar — Veri Analizi Okulu
+  (YÖK · Marmara / ODTÜ / İTÜ / Boğaziçi)
 - 2025 · Entry Certificate in Business Analysis (ECBA®) — IIBA
-- 2025 · Python for Everybody (PY4E) — University of Michigan
+- 2025 · Introduction to Business Analysis — IBM / Coursera
+- 2025 · Data Visualization and Dashboards with Excel and Cognos — IBM / Coursera
+- 2025 · Excel Basics for Data Analysis — IBM / Coursera
 - 2025 · Uçtan Uca SQL Server Eğitimi — Udemy
+- 2024 · Uygulamalarla SQL Öğreniyorum — BTK Akademi
 - 2023 · İş Analistliği Uzmanlık Sertifikası — İstanbul Teknik Üniversitesi
 - 2023 · Business Analyst Practicum — Patika.dev & FMSS Bilişim
 
@@ -83,15 +92,27 @@ e-postayı aciliyet ve belge türüne göre sınıflandırır, ekleri arşivler,
 Notion'ı araç olarak sorgulayıp soruları yanıtlar. Hafızalı LLM ajanı ve komut
 arayüzü.
 
-### İE-2603 · Sıfırdan Doğrusal Regresyon (car-price-linear-regression)
+### İE-2603 · Makine Arızası Tahmini (makine-arizasi-tahmini)
+Random forest · XGBoost · SHAP. UCI AI4I 2020 veri seti: 10.000 kayıt,
+%3,4 arıza oranı (dengesiz sınıf).
+- Hedef sızıntısı tespit edilip çıkarıldı; lojistik regresyon, karar ağacı,
+  rastgele orman ve XGBoost katmanlı 5 katlı çapraz doğrulamayla karşılaştırıldı.
+- Veri seti belgelerinden türetilen iki fiziksel özellik (sıcaklık farkı,
+  mekanik güç) F1'i 0,66'dan 0,85'e çıkardı; kaçan arıza 32'den 15'e indi.
+- Model davranışı SHAP ile doğrulandı.
+- Tarayıcıda çalışan canlı demo: senasayginsenyuz.com/makine-arizasi-tahmini/demo
+- Türkçe yazı Medium'da yayımlandı.
+- TRAI & Huawei Student Developers bootcamp bitirme projesi.
+
+### İE-2605 · Sıfırdan Doğrusal Regresyon (car-price-linear-regression)
 NumPy · gradyan inişi. Maliyet fonksiyonu, gradyan ve güncelleme kuralı elle
 yazıldı; kütüphane kısayolu kullanılmadı.
 
-### İE-2604 · Üretim Çizelgeleme Optimizasyonu
+### İE-2606 · Üretim Çizelgeleme Optimizasyonu
 OR-Tools · MILP. Kısıtlı makine ve iş gücü altında üretim sıralamasının
 matematiksel optimizasyonu. Durum: kuyrukta, 2026 Q4.
 
-### İE-2605 · Gecikme Karar Ajanı (late-delivery-agent) — bu sayfadaki canlı demo
+### İE-2604 · Gecikme Karar Ajanı (late-delivery-agent) — bu sayfadaki canlı demo
 İE-2601'in modelini karar veren bir sisteme bağlar.
 - Sipariş anında bilinen 11 alanla yeniden eğitilmiş XGBoost; 25 özellikli ana
   modele göre doğruluk 0,7134 → 0,6972, aşırı öğrenme yok.
@@ -111,7 +132,7 @@ Patika.dev × FMSS iş analizi bitirme çalışması; ECBA® yaklaşımıyla vak
 
 ## Yetkinlikler
 
-Yapay zekâ / veri: Python, SQL, pandas, scikit-learn, XGBoost; Gemini API, n8n,
+Yapay zekâ / veri: Python, SQL (MSSQL / T-SQL), pandas, NumPy, scikit-learn, XGBoost, SHAP; Gemini API, n8n,
 araç kullanımı ve hafıza; model ve eşik değerlendirme, anomali tespiti;
 Power BI, IBM Cognos, Excel.
 
